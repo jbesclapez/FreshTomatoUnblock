@@ -15,7 +15,7 @@ services:
       - DEFAULT_TIMEOUT_MINUTES=1
       - MAX_TIMEOUT_MINUTES=60
     volumes:
-      - ./data:/app/data
+      - /volume2/docker/freshtomato-unblock/data:/app/data
     restart: unless-stopped
     ports:
       - "3000:3000"
