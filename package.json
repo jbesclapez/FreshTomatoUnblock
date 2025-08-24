@@ -1,0 +1,25 @@
+{
+  "name": "freshtomato-unblock",
+  "version": "1.0.0",
+  "description": "Mini-service web Docker pour débloquer temporairement l'accès Internet d'appareils via SSH vers routeur FreshTomato",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node test/run-tests.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "express-rate-limit": "^7.1.5",
+    "node-ssh": "^13.1.0",
+    "better-sqlite3": "^9.2.2",
+    "helmet": "^7.1.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

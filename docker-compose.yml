@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  freshtomato-unblock:
+    build: .
+    container_name: freshtomato-unblock
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - SESSION_SECRET=${SESSION_SECRET:-change-this-secret-key}
+      - DB_PATH=/app/data/app.db
+      - SSH_KEYS_PATH=/app/data/ssh_keys
+      - DEFAULT_ROUTER_IP=192.168.1.1
+      - DEFAULT_SSH_USER=root
+      - DEFAULT_TIMEOUT_MINUTES=1
+      - MAX_TIMEOUT_MINUTES=60
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - freshtomato-network
+
+networks:
+  freshtomato-network:
+    driver: bridge

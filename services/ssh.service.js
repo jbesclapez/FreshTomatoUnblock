@@ -1,0 +1,178 @@
+const { NodeSSH } = require('node-ssh');
+const database = require('../config/database');
+const { validateMacAddress, validateDuration } = require('../utils/validator');
+
+class SshService {
+  constructor() {
+    this.ssh = new NodeSSH();
+  }
+
+  // Récupérer la configuration SSH depuis la base de données
+  async getSshConfig() {
+    try {
+      const db = database.getDb();
+      const stmt = db.prepare('SELECT key, value FROM config WHERE key IN (?, ?, ?, ?)');
+      const rows = stmt.all('router_ip', 'ssh_user', 'ssh_key', 'ssh_command_template');
+      
+      const config = {};
+      rows.forEach(row => {
+        config[row.key] = row.value;
+      });
+      
+      // Vérifier que la configuration est complète
+      if (!config.router_ip || !config.ssh_user || !config.ssh_key) {
+        throw new Error('Configuration SSH incomplète');
+      }
+      
+      return config;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Sauvegarder la clé SSH dans un fichier temporaire
+  async saveTemporaryKey(sshKey) {
+    const fs = require('fs').promises;
+    const path = require('path');
+    const crypto = require('crypto');
+    
+    const keyId = crypto.randomBytes(16).toString('hex');
+    const keyPath = path.join(process.env.SSH_KEYS_PATH || './data/ssh_keys', `temp_${keyId}`);
+    
+    await fs.writeFile(keyPath, sshKey, { mode: 0o600 });
+    return keyPath;
+  }
+
+  // Nettoyer les clés temporaires
+  async cleanupTemporaryKey(keyPath) {
+    try {
+      const fs = require('fs').promises;
+      await fs.unlink(keyPath);
+    } catch (error) {
+      console.warn('Erreur nettoyage clé temporaire:', error.message);
+    }
+  }
+
+  // Tester la connexion SSH
+  async testConnection() {
+    let keyPath = null;
+    
+    try {
+      const config = await this.getSshConfig();
+      keyPath = await this.saveTemporaryKey(config.ssh_key);
+      
+      await this.ssh.connect({
+        host: config.router_ip,
+        username: config.ssh_user,
+        privateKeyPath: keyPath,
+        readyTimeout: 10000, // 10 secondes
+        algorithms: {
+          kex: ['diffie-hellman-group14-sha256', 'ecdh-sha2-nistp256'],
+          cipher: ['aes128-ctr', 'aes192-ctr', 'aes256-ctr'],
+          hmac: ['hmac-sha2-256', 'hmac-sha2-512']
+        }
+      });
+      
+      // Test simple - exécuter 'echo test'
+      const result = await this.ssh.execCommand('echo "SSH connection test"');
+      
+      await this.ssh.dispose();
+      
+      if (result.code === 0) {
+        return { success: true, message: 'Connexion SSH réussie' };
+      } else {
+        return { success: false, message: `Erreur SSH: ${result.stderr || result.stdout}` };
+      }
+      
+    } catch (error) {
+      console.error('Erreur test SSH:', error);
+      return { success: false, message: `Échec connexion SSH: ${error.message}` };
+    } finally {
+      if (keyPath) {
+        await this.cleanupTemporaryKey(keyPath);
+      }
+    }
+  }
+
+  // Débloquer un appareil
+  async unblockDevice(macAddress, durationMinutes) {
+    // Validation
+    if (!validateMacAddress(macAddress)) {
+      throw new Error('Adresse MAC invalide');
+    }
+    
+    if (!validateDuration(durationMinutes)) {
+      throw new Error('Durée invalide');
+    }
+    
+    let keyPath = null;
+    
+    try {
+      const config = await this.getSshConfig();
+      keyPath = await this.saveTemporaryKey(config.ssh_key);
+      
+      // Construire la commande
+      const command = config.ssh_command_template
+        .replace('{MAC}', macAddress)
+        .replace('{MINUTES}', durationMinutes);
+      
+      console.log(`🔓 Déblocage: ${macAddress} pour ${durationMinutes} minute(s)`);
+      console.log(`📡 Commande SSH: ${command}`);
+      
+      await this.ssh.connect({
+        host: config.router_ip,
+        username: config.ssh_user,
+        privateKeyPath: keyPath,
+        readyTimeout: 10000, // 10 secondes
+        algorithms: {
+          kex: ['diffie-hellman-group14-sha256', 'ecdh-sha2-nistp256'],
+          cipher: ['aes128-ctr', 'aes192-ctr', 'aes256-ctr'],
+          hmac: ['hmac-sha2-256', 'hmac-sha2-512']
+        }
+      });
+      
+      const result = await this.ssh.execCommand(command);
+      
+      await this.ssh.dispose();
+      
+      if (result.code === 0) {
+        console.log(`✅ Déblocage réussi pour ${macAddress}`);
+        return { 
+          success: true, 
+          message: `Appareil ${macAddress} débloqué pour ${durationMinutes} minute(s)`,
+          output: result.stdout
+        };
+      } else {
+        console.error(`❌ Échec déblocage pour ${macAddress}:`, result.stderr);
+        return { 
+          success: false, 
+          message: `Échec du déblocage: ${result.stderr || 'Erreur inconnue'}`,
+          output: result.stderr
+        };
+      }
+      
+    } catch (error) {
+      console.error('Erreur déblocage SSH:', error);
+      throw new Error(`Erreur déblocage: ${error.message}`);
+    } finally {
+      if (keyPath) {
+        await this.cleanupTemporaryKey(keyPath);
+      }
+    }
+  }
+
+  // Tester le déblocage d'un appareil (pour l'interface admin)
+  async testUnblock(macAddress, durationMinutes = 1) {
+    try {
+      const result = await this.unblockDevice(macAddress, durationMinutes);
+      return result;
+    } catch (error) {
+      return { 
+        success: false, 
+        message: error.message
+      };
+    }
+  }
+}
+
+module.exports = new SshService();

@@ -1,0 +1,174 @@
+# FreshTomatoUnblock - Cursor Rules
+
+## Project Overview
+Mini-service web Docker pour débloquer temporairement l'accès Internet d'appareils via SSH vers routeur FreshTomato.
+
+## Tech Stack (Keep it Simple & Light)
+- **Backend**: Node.js + Express (minimal dependencies)
+- **Frontend**: Vanilla JavaScript + CSS moderne (no framework overhead)
+- **Database**: SQLite (fichier local simple)
+- **SSH**: node-ssh library
+- **Docker**: Alpine-based pour légèreté
+- **Auth**: Session-based simple (express-session)
+
+## Architecture Principles
+1. **Simplicité maximale** - éviter l'over-engineering
+2. **Léger** - dépendances minimales, images Docker slim
+3. **Sécurité** - validation stricte, logs, rate limiting
+4. **Robustesse** - gestion d'erreurs, timeouts SSH
+5. **Maintenabilité** - code lisible, structure claire
+
+## File Structure
+```
+/
+├── Dockerfile
+├── docker-compose.yml
+├── package.json
+├── server.js              # Point d'entrée principal
+├── config/
+│   └── database.js        # Setup SQLite
+├── routes/
+│   ├── admin.js          # Routes admin (CRUD devices, config)
+│   ├── unblock.js        # Routes déblocage
+│   └── auth.js           # Authentification
+├── services/
+│   ├── ssh.service.js    # Gestion SSH vers routeur
+│   ├── device.service.js # CRUD appareils
+│   └── log.service.js    # Journalisation
+├── middleware/
+│   ├── auth.js           # Middleware auth admin
+│   └── rateLimit.js      # Rate limiting
+├── utils/
+│   ├── keyConverter.js   # Conversion .ppk → OpenSSH
+│   └── validator.js     # Validation MAC, durées, etc.
+├── public/
+│   ├── admin/           # Interface admin
+│   │   ├── index.html
+│   │   ├── style.css
+│   │   └── script.js
+│   └── user/            # Interface utilisateur
+│       ├── index.html
+│       ├── style.css
+│       └── script.js
+└── data/
+    ├── app.db           # Base SQLite
+    └── ssh_keys/        # Clés SSH stockées
+```
+
+## Database Schema (SQLite)
+```sql
+-- Configuration globale
+CREATE TABLE config (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+-- Valeurs par défaut à insérer
+INSERT OR REPLACE INTO config VALUES 
+('router_ip', '192.168.1.1'),
+('ssh_user', 'root'),
+('ssh_key', 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPTyj59lhoNY76J3zxVvZnvDIuR07/Hvo5eaUUGIVraY'),
+('default_timeout_minutes', '1'),
+('max_timeout_minutes', '60'),
+('ssh_command_template', 'SSH_ORIGINAL_COMMAND="unblock {MAC} {MINUTES}" sh /tmp/kidtemp_unblock.sh');
+
+-- Appareils
+CREATE TABLE devices (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    mac TEXT UNIQUE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Logs des déblocages
+CREATE TABLE unblock_logs (
+    id INTEGER PRIMARY KEY,
+    device_id INTEGER,
+    source_ip TEXT,
+    duration_minutes INTEGER,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (device_id) REFERENCES devices(id)
+);
+```
+
+## API Routes
+### Admin (require auth)
+- `POST /auth/login` - Connexion admin
+- `GET/POST /admin/config` - Configuration SSH + paramètres
+- `GET/POST/PUT/DELETE /admin/devices` - CRUD appareils
+- `POST /admin/test-ssh` - Test connexion SSH
+- `POST /admin/test-unblock` - Test déblocage
+- `GET /admin/logs` - Journal des déblocages
+
+### User (public)
+- `GET /` - Interface utilisateur (liste appareils)
+- `POST /unblock` - Débloquer un appareil
+- `GET /device/:id` - Page spécifique par appareil (optionnel)
+
+## Security Requirements
+1. **Rate limiting**: 5 tentatives/minute par IP pour déblocage
+2. **Validation stricte**: MAC address format, durées dans bornes
+3. **SSH security**: timeout 10s, validation des réponses
+4. **Session security**: httpOnly cookies, CSRF protection basique
+5. **Input sanitization**: échapper toutes les entrées utilisateur
+6. **Logs complets**: qui, quand, quoi pour audit
+
+## Error Handling
+- Timeouts SSH explicites (10s)
+- Validation côté client ET serveur
+- Messages d'erreur explicites mais sans révéler détails système
+- Fallback gracieux si SSH échoue
+- Logs d'erreurs détaillés côté serveur
+
+## Development Guidelines
+1. **Dependencies**: Garder package.json minimal
+2. **Code style**: Utiliser des noms explicites, commenter les parties critiques
+3. **Config**: Variables d'environnement pour secrets (DB_PATH, ADMIN_PASSWORD)
+4. **Testing**: Au minimum, tester la conversion de clés et validation MAC
+5. **Docker**: Multi-stage build pour optimiser taille image
+
+## Key Features Implementation
+1. **Conversion clés .ppk**: Utiliser `ssh-keygen` ou library pure JS
+2. **Interface responsive**: CSS Grid/Flexbox, mobile-friendly
+3. **Real-time feedback**: Fetch API + loading states
+4. **Auto-refresh**: Optionnel, statut des déblocages en cours
+5. **Durée par défaut**: 1 minute, dropdown 1-60 minutes
+
+## Default Configuration
+- **Router IP**: 192.168.1.1 (subnet 255.255.255.0)
+- **SSH User**: root
+- **SSH Key**: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPTyj59lhoNY76J3zxVvZnvDIuR07/Hvo5eaUUGIVraY
+- **Default timeout**: 1 minute
+- **Timeout range**: 1-60 minutes (dropdown)
+- **SSH Command**: `SSH_ORIGINAL_COMMAND="unblock <MAC> <minutes>" sh /tmp/kidtemp_unblock.sh`
+
+## Environment Variables
+```
+ADMIN_PASSWORD=your_secure_password
+DB_PATH=/app/data/app.db
+SSH_KEYS_PATH=/app/data/ssh_keys
+SESSION_SECRET=your_session_secret
+NODE_ENV=production
+PORT=3000
+# Default SSH config (can be overridden via admin interface)
+DEFAULT_ROUTER_IP=192.168.1.1
+DEFAULT_SSH_USER=root
+DEFAULT_TIMEOUT_MINUTES=1
+MAX_TIMEOUT_MINUTES=60
+```
+
+## Docker Considerations
+- Base image: `node:18-alpine`
+- Volume pour persistance: `/app/data`
+- Port exposé: 3000
+- User non-root dans container
+- Health check endpoint `/health`
+
+## Notes importantes
+- Jamais de modification directe config Tomato
+- Toujours utiliser la commande SSH: `SSH_ORIGINAL_COMMAND="unblock <MAC> <minutes>" sh /tmp/kidtemp_unblock.sh`
+- Validation MAC stricte (format xx:xx:xx:xx:xx:xx, exemple: 68:54:5A:96:69:BE)
+- Dropdown durée: 1-60 minutes, défaut 1 minute
+- Logs rotatifs pour éviter croissance infinie
+- Configuration par défaut intégrée mais modifiable via interface admin
+- Backup/restore config simple via export/import JSON
