@@ -68,14 +68,14 @@ class LogService {
     try {
       const db = database.getDb();
       
-      const totalUnlocks = db.prepare(`SELECT COUNT(*) as count FROM unblock_logs WHERE timestamp > datetime('now', '-${days} days')`).get().count;
+      const totalUnlocks = db.prepare(`SELECT COUNT(*) as count FROM unblock_logs WHERE timestamp > datetime(\'now\', \'-${days} days\')`).get().count;
       
       const unlocksByDay = db.prepare(`
         SELECT 
           DATE(timestamp) as date,
           COUNT(*) as count
         FROM unblock_logs 
-        WHERE timestamp > datetime('now', '-${days} days')
+        WHERE timestamp > datetime(\'now\', \'-${days} days\')
         GROUP BY DATE(timestamp)
         ORDER BY date DESC
       `).all();
@@ -87,7 +87,7 @@ class LogService {
           COUNT(*) as unlock_count
         FROM unblock_logs ul
         LEFT JOIN devices d ON ul.device_id = d.id
-        WHERE ul.timestamp > datetime('now', '-${days} days')
+        WHERE ul.timestamp > datetime(\'now\', \'-${days} days\')
         GROUP BY ul.device_id
         ORDER BY unlock_count DESC
         LIMIT 5
@@ -98,7 +98,7 @@ class LogService {
           duration_minutes,
           COUNT(*) as count
         FROM unblock_logs 
-        WHERE timestamp > datetime('now', '-${days} days')
+        WHERE timestamp > datetime(\'now\', \'-${days} days\')
         GROUP BY duration_minutes
         ORDER BY duration_minutes ASC
       `).all();
@@ -118,7 +118,7 @@ class LogService {
   async cleanupOldLogs(daysToKeep = 90) {
     try {
       const db = database.getDb();
-      const stmt = db.prepare(`DELETE FROM unblock_logs WHERE timestamp < datetime('now', '-${daysToKeep} days')`);
+      const stmt = db.prepare(`DELETE FROM unblock_logs WHERE timestamp < datetime(\'now\', \'-${daysToKeep} days\')`);
       const result = stmt.run();
       
       console.log(`🧹 Nettoyage logs: ${result.changes} entrées supprimées`);

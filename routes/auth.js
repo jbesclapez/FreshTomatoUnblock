@@ -16,7 +16,10 @@ router.post('/login', loginLimiter, async (req, res) => {
     
     if (isValid) {
       req.session.isAdmin = true;
-      console.log(`🔐 Connexion admin réussie depuis ${req.ip}`);
+      console.log(`🔐 Connexion admin réussie depuis ${req.ip}`, {
+        sessionId: req.session.id,
+        sessionData: req.session
+      });
       res.json({ success: true, message: 'Connexion réussie' });
     } else {
       console.log(`🚫 Tentative connexion admin échouée depuis ${req.ip}`);

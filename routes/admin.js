@@ -5,6 +5,7 @@ const logService = require('../services/log.service');
 const sshService = require('../services/ssh.service');
 const database = require('../config/database');
 const { validateSshKey, validateIpAddress, validateDuration } = require('../utils/validator');
+const { ensureOpenSshFormat, detectKeyFormat } = require('../utils/keyConverter');
 
 const router = express.Router();
 
@@ -15,9 +16,19 @@ router.get('/login.html', (req, res) => {
 
 // Route pour l'interface admin principale
 router.get('/', (req, res) => {
+  console.log('🔍 Admin route accessed:', {
+    hasSession: !!req.session,
+    isAdmin: req.session?.isAdmin,
+    sessionId: req.session?.id,
+    ip: req.ip
+  });
+  
   if (!req.session || !req.session.isAdmin) {
+    console.log('❌ Redirecting to login - not authenticated');
     return res.redirect('/admin/login.html');
   }
+  
+  console.log('✅ Serving admin interface');
   res.sendFile('index.html', { root: './public/admin' });
 });
 
@@ -194,6 +205,48 @@ router.post('/api/config', async (req, res) => {
 });
 
 // === TESTS SSH ===
+
+// Conversion de clé PPK
+router.post('/api/convert-key', async (req, res) => {
+    try {
+        const { keyContent } = req.body;
+        
+        if (!keyContent) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Contenu de clé manquant' 
+            });
+        }
+        
+        console.log('🔑 Demande de conversion de clé depuis admin');
+        
+        const format = detectKeyFormat(keyContent);
+        console.log(`Format détecté: ${format}`);
+        
+        if (format === 'openssh') {
+            return res.json({ 
+                success: true, 
+                convertedKey: keyContent.trim(),
+                message: 'Clé déjà au format OpenSSH'
+            });
+        }
+        
+        const convertedKey = await ensureOpenSshFormat(keyContent);
+        
+        res.json({ 
+            success: true, 
+            convertedKey: convertedKey,
+            message: `Clé convertie depuis le format ${format}`
+        });
+        
+    } catch (error) {
+        console.error('Erreur conversion clé:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: error.message 
+        });
+    }
+});
 
 // Tester la connexion SSH
 router.post('/api/test-ssh', async (req, res) => {

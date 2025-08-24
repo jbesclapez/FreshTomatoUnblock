@@ -14,7 +14,7 @@ FROM node:18-alpine
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Installer openssh-client pour la conversion de clés
+# Installer openssh-client pour la gestion des clés SSH
 RUN apk add --no-cache openssh-client
 
 WORKDIR /app

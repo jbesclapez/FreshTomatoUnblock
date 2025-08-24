@@ -130,8 +130,8 @@ class DeviceService {
       const db = database.getDb();
       
       const totalDevices = db.prepare('SELECT COUNT(*) as count FROM devices').get().count;
-      const unlocks24h = db.prepare('SELECT COUNT(*) as count FROM unblock_logs WHERE timestamp > datetime("now", "-24 hours")').get().count;
-      const unlocks7d = db.prepare('SELECT COUNT(*) as count FROM unblock_logs WHERE timestamp > datetime("now", "-7 days")').get().count;
+      const unlocks24h = db.prepare('SELECT COUNT(*) as count FROM unblock_logs WHERE timestamp > datetime(\'now\', \'-24 hours\')').get().count;
+      const unlocks7d = db.prepare('SELECT COUNT(*) as count FROM unblock_logs WHERE timestamp > datetime(\'now\', \'-7 days\')').get().count;
       
       return {
         total_devices: totalDevices,

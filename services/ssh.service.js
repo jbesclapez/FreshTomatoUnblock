@@ -59,6 +59,12 @@ class SshService {
     
     try {
       const config = await this.getSshConfig();
+      
+      // Vérifier que la clé SSH est configurée et semble être une clé privée
+      if (!config.ssh_key || config.ssh_key.includes('# Clé privée SSH requise') || config.ssh_key.startsWith('ssh-')) {
+        throw new Error('Clé privée SSH non configurée. Veuillez configurer une clé privée SSH dans les paramètres (pas une clé publique).');
+      }
+      
       keyPath = await this.saveTemporaryKey(config.ssh_key);
       
       await this.ssh.connect({

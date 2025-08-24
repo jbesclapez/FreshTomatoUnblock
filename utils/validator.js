@@ -61,15 +61,34 @@ function sanitizeString(str, maxLength = 255) {
   return str.trim().substring(0, maxLength);
 }
 
-// Validation d'une clé SSH (format basique)
+// Validation d'une clé SSH (publique ou privée)
 function validateSshKey(key) {
   if (!key || typeof key !== 'string') {
     return false;
   }
   
-  // Vérifier qu'elle commence par un type de clé connu
-  const sshKeyRegex = /^(ssh-rsa|ssh-dss|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)\s+[A-Za-z0-9+/]+[=]{0,3}(\s+.*)?$/;
-  return sshKeyRegex.test(key.trim());
+  const trimmed = key.trim();
+  
+  // Clé publique SSH (ssh-rsa, ssh-ed25519, etc.)
+  const publicKeyRegex = /^(ssh-rsa|ssh-dss|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521)\s+[A-Za-z0-9+/]+[=]{0,3}(\s+.*)?$/;
+  
+  // Clé privée OpenSSH
+  const opensshPrivateKeyRegex = /^-----BEGIN OPENSSH PRIVATE KEY-----[\s\S]*-----END OPENSSH PRIVATE KEY-----$/;
+  
+  // Clé privée PEM traditionnelle
+  const pemPrivateKeyRegex = /^-----BEGIN (RSA )?PRIVATE KEY-----[\s\S]*-----END (RSA )?PRIVATE KEY-----$/;
+  
+  // Clé privée PKCS#8
+  const pkcs8PrivateKeyRegex = /^-----BEGIN PRIVATE KEY-----[\s\S]*-----END PRIVATE KEY-----$/;
+  
+  // Clé privée EC
+  const ecPrivateKeyRegex = /^-----BEGIN EC PRIVATE KEY-----[\s\S]*-----END EC PRIVATE KEY-----$/;
+  
+  return publicKeyRegex.test(trimmed) || 
+         opensshPrivateKeyRegex.test(trimmed) || 
+         pemPrivateKeyRegex.test(trimmed) ||
+         pkcs8PrivateKeyRegex.test(trimmed) ||
+         ecPrivateKeyRegex.test(trimmed);
 }
 
 module.exports = {

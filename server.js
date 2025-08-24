@@ -14,7 +14,8 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
       imgSrc: ["'self'", "data:"],
     },
   },
@@ -48,6 +49,11 @@ app.use('/api', require('./routes/unblock'));
 // Route de santé pour Docker
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Route favicon pour éviter les erreurs 404
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
 });
 
 // Route par défaut - redirection vers l'interface utilisateur

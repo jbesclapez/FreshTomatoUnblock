@@ -51,7 +51,7 @@ class DatabaseManager {
     const defaultConfig = [
       ['router_ip', process.env.DEFAULT_ROUTER_IP || '192.168.1.1'],
       ['ssh_user', process.env.DEFAULT_SSH_USER || 'root'],
-      ['ssh_key', 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPTyj59lhoNY76J3zxVvZnvDIuR07/Hvo5eaUUGIVraY'],
+      ['ssh_key', '# Clé privée SSH requise - remplacez par votre clé privée\n# Exemple de format OpenSSH:\n# -----BEGIN OPENSSH PRIVATE KEY-----\n# b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAFwAAAAdzc2gtcnNh\n# ...\n# -----END OPENSSH PRIVATE KEY-----'],
       ['default_timeout_minutes', process.env.DEFAULT_TIMEOUT_MINUTES || '1'],
       ['max_timeout_minutes', process.env.MAX_TIMEOUT_MINUTES || '60'],
       ['ssh_command_template', 'SSH_ORIGINAL_COMMAND="unblock {MAC} {MINUTES}" sh /tmp/kidtemp_unblock.sh']

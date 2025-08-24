@@ -3,6 +3,69 @@ const fs = require('fs').promises;
 const path = require('path');
 
 /**
+ * Convertir avec puttygen (si disponible)
+ */
+async function convertWithPuttygen(ppkFilePath) {
+    return new Promise((resolve, reject) => {
+        const puttygen = spawn('puttygen', [ppkFilePath, '-O', 'private-openssh'], {
+            stdio: ['pipe', 'pipe', 'pipe']
+        });
+        
+        let stdout = '';
+        let stderr = '';
+        
+        puttygen.stdout.on('data', (data) => {
+            stdout += data.toString();
+        });
+        
+        puttygen.stderr.on('data', (data) => {
+            stderr += data.toString();
+        });
+        
+        puttygen.on('close', (code) => {
+            if (code === 0) {
+                resolve(stdout.trim());
+            } else {
+                reject(new Error(`puttygen failed: ${stderr}`));
+            }
+        });
+        
+        puttygen.on('error', (error) => {
+            reject(new Error(`puttygen not available: ${error.message}`));
+        });
+    });
+}
+
+/**
+ * Parser PPK manuellement (fallback)
+ */
+async function parsePpkManually(ppkContent) {
+    // Fournir des instructions détaillées pour la conversion manuelle
+    throw new Error(`Conversion PPK automatique non disponible dans ce conteneur Alpine.
+
+🔧 SOLUTION: Convertir manuellement votre fichier .ppk
+
+📋 Étapes à suivre:
+
+1️⃣ Ouvrez PuTTYgen sur votre machine Windows/Linux
+2️⃣ Cliquez "Load" et sélectionnez votre fichier kidtemp_router.ppk
+3️⃣ Dans le menu "Conversions", choisissez "Export OpenSSH key"
+4️⃣ Sauvegardez sous "kidtemp_router_openssh.key"
+5️⃣ Ouvrez le fichier .key avec un éditeur de texte
+6️⃣ Copiez TOUT le contenu et collez-le dans la zone de texte ci-dessous
+
+✅ La clé OpenSSH commence par:
+-----BEGIN OPENSSH PRIVATE KEY-----
+et se termine par:
+-----END OPENSSH PRIVATE KEY-----
+
+💡 Alternative en ligne de commande:
+   puttygen kidtemp_router.ppk -O private-openssh -o kidtemp_router_openssh.key
+
+⚠️  Important: N'utilisez PAS la clé publique (ssh-ed25519...), il faut la clé PRIVÉE`);
+}
+
+/**
  * Convertir une clé PuTTY .ppk en format OpenSSH
  * @param {string} ppkContent - Contenu du fichier .ppk
  * @returns {Promise<string>} - Clé OpenSSH convertie
@@ -19,37 +82,9 @@ async function convertPpkToOpenSsh(ppkContent) {
         // Écrire le fichier .ppk temporaire
         await fs.writeFile(tempPpkFile, ppkContent);
         
-        // Convertir avec ssh-keygen
-        const result = await new Promise((resolve, reject) => {
-            const sshKeygen = spawn('ssh-keygen', [
-                '-i',
-                '-m', 'PKCS8',
-                '-f', tempPpkFile
-            ]);
-            
-            let stdout = '';
-            let stderr = '';
-            
-            sshKeygen.stdout.on('data', (data) => {
-                stdout += data.toString();
-            });
-            
-            sshKeygen.stderr.on('data', (data) => {
-                stderr += data.toString();
-            });
-            
-            sshKeygen.on('close', (code) => {
-                if (code === 0) {
-                    resolve(stdout.trim());
-                } else {
-                    reject(new Error(`Conversion échouée: ${stderr}`));
-                }
-            });
-            
-            sshKeygen.on('error', (error) => {
-                reject(new Error(`Erreur ssh-keygen: ${error.message}`));
-            });
-        });
+        // Pour les conteneurs Alpine, puttygen n'est pas disponible
+        // Utiliser une approche alternative avec instructions claires
+        const result = await parsePpkManually(ppkContent);
         
         return result;
         
