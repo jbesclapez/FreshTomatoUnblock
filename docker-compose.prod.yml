@@ -13,3 +13,6 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme123}
     # Remove ports mapping since we use host networking
     ports: []
+    volumes:
+      # Use Volume2 path as specified by user
+      - /volume2/docker/freshtomato-unblock/data:/app/data

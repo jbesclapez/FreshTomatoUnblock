@@ -16,16 +16,33 @@ docker-compose up -d
 1. Copy the project folder to your Synology NAS (192.168.1.10)
 2. SSH into your Synology or use File Station
 
-### Step 2: Deploy with Production Configuration
+### Step 2: Create Data Directory and Deploy
 
 ```bash
-# On Synology, use production compose file
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Create the data directory first (using Volume2 as per user setup)
+mkdir -p /volume2/docker/freshtomato-unblock/data
 
-# Or set environment variables
+# Or if using relative path, create local data directory
+mkdir -p data
+
+# Set environment variables
 export ADMIN_PASSWORD="your_secure_password"
+
+# Deploy with production compose file
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
+
+### Alternative: Using Synology Container Manager UI
+
+1. **Create the data directory** in File Station:
+   - Navigate to `/volume2/docker/freshtomato-unblock/` (folder already created by user)
+   - Create subfolder: `data`
+
+2. **In Container Manager**:
+   - Create new project
+   - Upload your `docker-compose.yml` and `docker-compose.prod.yml`
+   - Set volume mapping: `/volume2/docker/freshtomato-unblock/data` → `/app/data`
+   - Deploy
 
 ### Step 3: Access the Service
 
