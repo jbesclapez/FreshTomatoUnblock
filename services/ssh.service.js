@@ -53,6 +53,38 @@ class SshService {
     }
   }
 
+  // Test de connectivité réseau
+  async testNetworkConnectivity(host) {
+    return new Promise((resolve, reject) => {
+      const net = require('net');
+      const socket = new net.Socket();
+      
+      console.log(`🌐 Test de connectivité réseau vers ${host}:22`);
+      
+      socket.setTimeout(5000);
+      
+      socket.on('connect', () => {
+        console.log(`✅ Connectivité réseau OK vers ${host}:22`);
+        socket.destroy();
+        resolve(true);
+      });
+      
+      socket.on('timeout', () => {
+        console.log(`❌ Timeout de connectivité réseau vers ${host}:22`);
+        socket.destroy();
+        reject(new Error(`Impossible de joindre ${host}:22 - vérifiez l'IP du routeur et la connectivité réseau`));
+      });
+      
+      socket.on('error', (error) => {
+        console.log(`❌ Erreur de connectivité réseau vers ${host}:22:`, error.message);
+        socket.destroy();
+        reject(new Error(`Erreur réseau vers ${host}:22: ${error.message}`));
+      });
+      
+      socket.connect(22, host);
+    });
+  }
+
   // Tester la connexion SSH
   async testConnection() {
     let keyPath = null;
@@ -67,16 +99,55 @@ class SshService {
       
       keyPath = await this.saveTemporaryKey(config.ssh_key);
       
+      console.log(`🔗 Tentative de connexion SSH vers ${config.router_ip} en tant que ${config.ssh_user}`);
+      console.log(`🔑 Clé SSH: ${keyPath}`);
+      
+      // Test de connectivité réseau avant SSH
+      try {
+        await this.testNetworkConnectivity(config.router_ip);
+      } catch (networkError) {
+        console.log('❌ Connectivité réseau échouée, tentative SSH directe...');
+        console.log('Network error:', networkError.message);
+        // Continue avec SSH même si le test réseau échoue
+      }
+      
       await this.ssh.connect({
         host: config.router_ip,
         username: config.ssh_user,
         privateKeyPath: keyPath,
-        readyTimeout: 10000, // 10 secondes
+        port: 22,
+        readyTimeout: 15000, // 15 secondes
+        // Algorithmes plus larges pour compatibilité FreshTomato
         algorithms: {
-          kex: ['diffie-hellman-group14-sha256', 'ecdh-sha2-nistp256'],
-          cipher: ['aes128-ctr', 'aes192-ctr', 'aes256-ctr'],
-          hmac: ['hmac-sha2-256', 'hmac-sha2-512']
-        }
+          kex: [
+            'diffie-hellman-group14-sha256',
+            'diffie-hellman-group14-sha1', 
+            'diffie-hellman-group1-sha1',
+            'ecdh-sha2-nistp256',
+            'ecdh-sha2-nistp384',
+            'ecdh-sha2-nistp521'
+          ],
+          cipher: [
+            'aes128-ctr', 
+            'aes192-ctr', 
+            'aes256-ctr',
+            'aes128-gcm',
+            'aes256-gcm',
+            'aes128-cbc',
+            'aes192-cbc',
+            'aes256-cbc',
+            '3des-cbc'
+          ],
+          hmac: [
+            'hmac-sha2-256',
+            'hmac-sha2-512', 
+            'hmac-sha1',
+            'hmac-sha1-96',
+            'hmac-md5'
+          ],
+          compress: ['none', 'zlib@openssh.com', 'zlib']
+        },
+        debug: (msg) => console.log(`SSH Debug: ${msg}`)
       });
       
       // Test simple - exécuter 'echo test'

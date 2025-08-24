@@ -4,8 +4,6 @@ services:
   freshtomato-unblock:
     build: .
     container_name: freshtomato-unblock
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=production
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
@@ -19,9 +17,5 @@ services:
     volumes:
       - ./data:/app/data
     restart: unless-stopped
-    networks:
-      - freshtomato-network
-
-networks:
-  freshtomato-network:
-    driver: bridge
+    ports:
+      - "3000:3000"

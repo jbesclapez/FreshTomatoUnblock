@@ -1,0 +1,15 @@
+# Override for development on Windows
+# This file allows development with bridge networking
+# Will be ignored when deployed to Synology
+
+version: '3.8'
+
+services:
+  freshtomato-unblock:
+    network_mode: "bridge"  # Override host networking for Windows development
+    ports:
+      - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - DEFAULT_ROUTER_IP=192.168.1.1  # Will timeout but allows development
