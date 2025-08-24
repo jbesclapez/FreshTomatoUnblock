@@ -1,5 +1,6 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 
 class DatabaseManager {
   constructor() {
@@ -10,12 +11,41 @@ class DatabaseManager {
     const dbPath = process.env.DB_PATH || path.join(__dirname, '../data/app.db');
     
     try {
+      // Ensure the directory exists and has proper permissions
+      const dbDir = path.dirname(dbPath);
+      
+      if (!fs.existsSync(dbDir)) {
+        console.log(`📁 Création du répertoire de base de données: ${dbDir}`);
+        fs.mkdirSync(dbDir, { recursive: true, mode: 0o777 });
+      }
+      
+      // Test write permissions by trying to create a test file
+      try {
+        const testFile = path.join(dbDir, '.write-test');
+        fs.writeFileSync(testFile, 'test');
+        fs.unlinkSync(testFile);
+        console.log(`✅ Permissions d'écriture confirmées: ${dbDir}`);
+      } catch (permError) {
+        console.error(`❌ Erreur permissions répertoire ${dbDir}:`, permError.message);
+        // Try to fix permissions
+        try {
+          fs.chmodSync(dbDir, 0o777);
+          console.log(`🔧 Permissions corrigées pour: ${dbDir}`);
+        } catch (chmodError) {
+          console.error(`❌ Impossible de corriger les permissions:`, chmodError.message);
+        }
+      }
+      
+      console.log(`📄 Tentative d'ouverture de la base de données: ${dbPath}`);
       this.db = new Database(dbPath);
-      console.log('Connexion SQLite établie');
+      console.log('✅ Connexion SQLite établie');
+      
       await this.createTables();
       return Promise.resolve();
     } catch (err) {
-      console.error('Erreur connexion SQLite:', err);
+      console.error('❌ Erreur connexion SQLite:', err);
+      console.error('Path de la DB:', dbPath);
+      console.error('Répertoire parent:', path.dirname(dbPath));
       return Promise.reject(err);
     }
   }

@@ -23,8 +23,10 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --chown=nodejs:nodejs . .
 
-# Créer les répertoires de données
+# Créer les répertoires de données avec les bonnes permissions
 RUN mkdir -p /app/data/ssh_keys && \
+    chmod 777 /app/data && \
+    chmod 777 /app/data/ssh_keys && \
     chown -R nodejs:nodejs /app/data
 
 # Exposer le port

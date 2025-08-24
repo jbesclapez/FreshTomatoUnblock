@@ -7,10 +7,12 @@ services:
   freshtomato-unblock:
     network_mode: "host"  # Direct access to Synology's network
     restart: always
+    user: "0:0"  # Run as root to avoid permission issues
     environment:
       - NODE_ENV=production
       - DEFAULT_ROUTER_IP=192.168.1.1
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme123}
+      - PORT=3001
     # Remove ports mapping since we use host networking
     ports: []
     volumes:

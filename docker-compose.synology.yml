@@ -1,0 +1,21 @@
+# Alternative Synology deployment with bridge networking
+# Use: docker-compose -f docker-compose.yml -f docker-compose.synology.yml up -d
+
+version: '3.8'
+
+services:
+  freshtomato-unblock:
+    # Use bridge networking instead of host
+    ports:
+      - "3000:3000"
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - DEFAULT_ROUTER_IP=192.168.1.1
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme123}
+    volumes:
+      # Use Volume2 path as specified by user
+      - /volume2/docker/freshtomato-unblock/data:/app/data
+    # Add extra hosts for router access
+    extra_hosts:
+      - "router.local:192.168.1.1"
