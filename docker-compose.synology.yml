@@ -43,10 +43,11 @@ services:
     cap_add:
       - CHOWN  # Needed for file ownership in volume
       - DAC_OVERRIDE  # Needed for file permissions
+      - FOWNER  # Needed for SQLite database file operations
     # Use non-root user from Dockerfile (nodejs:1001) for better security
     # user: "0:0"  # Removed - avoid running as root
-    # Remove read_only for now as it may cause issues with Portainer
-    read_only: true
+    # Temporarily disable read_only for SQLite database initialization
+    # read_only: true  # TODO: Re-enable after database permissions are working
     tmpfs:
       - /tmp:noexec,nosuid,nodev,size=50m
       - /app/data/ssh_keys:noexec,nosuid,nodev,size=10m
