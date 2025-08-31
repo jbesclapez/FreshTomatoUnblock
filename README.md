@@ -41,10 +41,14 @@ Mini-service web Docker pour débloquer temporairement l'accès Internet d'appar
    cp env.example .env
    ```
 
-2. **Modifier `.env`**
+2. **Configurer l'authentification sécurisée**
    ```bash
-   ADMIN_PASSWORD=votre_mot_de_passe_admin
-   SESSION_SECRET=votre_clé_session_sécurisée
+   # Générer un hash sécurisé pour le mot de passe admin
+   node utils/generate-hash.js "VotreMotDePasseSecurise123"
+   
+   # Copier le hash généré dans .env
+   cp env.example .env
+   # Éditer .env avec le hash généré et une clé de session sécurisée
    ```
 
 3. **Lancer avec Docker**
@@ -76,9 +80,12 @@ Mini-service web Docker pour débloquer temporairement l'accès Internet d'appar
 
 ### Variables d'environnement
 ```bash
-# Authentification admin
-ADMIN_PASSWORD=mot_de_passe_sécurisé
+# Authentification admin (SÉCURISÉ)
+ADMIN_PASSWORD_HASH=hash_bcrypt_généré_avec_utils
 SESSION_SECRET=clé_session_32_caractères_minimum
+
+# Développement uniquement (non recommandé en production)
+# ADMIN_PASSWORD=mot_de_passe_sécurisé
 
 # Base de données et stockage
 DB_PATH=/app/data/app.db
@@ -108,6 +115,28 @@ L'interface admin permet de configurer :
 - **Validation automatique** des formats
 - **Tests de déblocage** depuis l'interface admin
 
+## 🔒 Sécurité
+
+### Configuration sécurisée requise
+
+**⚠️ IMPORTANT**: Avant le déploiement en production, vous DEVEZ configurer l'authentification sécurisée.
+
+1. **Générer un hash de mot de passe**:
+   ```bash
+   node utils/generate-hash.js "VotreMotDePasseSecurise123"
+   ```
+
+2. **Configurer votre `.env`**:
+   ```bash
+   ADMIN_PASSWORD_HASH=$2b$12$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   SESSION_SECRET=your_very_long_session_secret_key_32_chars_minimum
+   NODE_ENV=production
+   ```
+
+3. **Ne jamais utiliser `ADMIN_PASSWORD` en production**
+
+Pour plus de détails, consultez [SECURITY.md](SECURITY.md).
+
 ## 🔧 Architecture technique
 
 ### Stack technologique
@@ -134,12 +163,15 @@ L'interface admin permet de configurer :
 ```
 
 ### Sécurité implémentée
-- **Rate limiting**: 5 tentatives/minute pour déblocage
+- **Authentification bcrypt**: Hash sécurisé des mots de passe admin
+- **Rate limiting**: 5 tentatives/minute pour déblocage, 15min pour login
 - **Validation stricte**: MAC addresses, durées, IPs
-- **Sessions sécurisées**: httpOnly cookies, CSRF protection
-- **SSH sécurisé**: timeouts, validation des réponses
+- **Sessions sécurisées**: httpOnly cookies, CSRF protection, HTTPS en production
+- **SSH sécurisé**: timeouts, validation, debug désactivé en production
+- **Permissions Docker**: Accès restrictif aux fichiers (750/700)
 - **Logs complets**: audit trail complet
 - **Input sanitization**: protection contre injections
+- **Validation startup**: Variables d'environnement obligatoires
 
 ## 📊 Monitoring et logs
 

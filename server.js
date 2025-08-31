@@ -4,6 +4,43 @@ const helmet = require('helmet');
 const path = require('path');
 const database = require('./config/database');
 
+// Validation des variables d'environnement critiques
+function validateEnvironment() {
+  const requiredEnvVars = ['SESSION_SECRET'];
+  const productionRequiredVars = ['ADMIN_PASSWORD_HASH'];
+  
+  // Variables toujours requises
+  for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+      throw new Error(`❌ Variable d'environnement manquante: ${envVar}`);
+    }
+  }
+  
+  // Variables requises en production
+  if (process.env.NODE_ENV === 'production') {
+    for (const envVar of productionRequiredVars) {
+      if (!process.env[envVar]) {
+        throw new Error(`❌ Variable d'environnement de production manquante: ${envVar}`);
+      }
+    }
+    
+    // Vérifier que ADMIN_PASSWORD n'est pas utilisé en production
+    if (process.env.ADMIN_PASSWORD && !process.env.ADMIN_PASSWORD_HASH) {
+      console.warn('⚠️  SÉCURITÉ: ADMIN_PASSWORD détecté en production. Utilisez ADMIN_PASSWORD_HASH à la place.');
+    }
+  }
+  
+  // Validation de la longueur de SESSION_SECRET
+  if (process.env.SESSION_SECRET.length < 32) {
+    throw new Error('❌ SESSION_SECRET doit contenir au moins 32 caractères');
+  }
+  
+  console.log('✅ Validation des variables d\'environnement réussie');
+}
+
+// Valider l'environnement au démarrage
+validateEnvironment();
+
 // Initialisation de l'application
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,10 +69,12 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to false for localhost testing
+    secure: process.env.NODE_ENV === 'production', // HTTPS en production
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 heures
-  }
+    maxAge: 24 * 60 * 60 * 1000, // 24 heures
+    sameSite: 'lax' // Protection CSRF
+  },
+  name: 'freshtomato.sid' // Nom de session personnalisé
 }));
 
 // Route de santé pour Docker

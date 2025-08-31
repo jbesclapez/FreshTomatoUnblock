@@ -147,7 +147,8 @@ class SshService {
           ],
           compress: ['none', 'zlib@openssh.com', 'zlib']
         },
-        debug: (msg) => console.log(`SSH Debug: ${msg}`)
+        debug: process.env.NODE_ENV === 'development' ? 
+          (msg) => console.log(`SSH Debug: ${msg}`) : undefined
       });
       
       // Test simple - exécuter 'echo test'

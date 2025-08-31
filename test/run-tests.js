@@ -81,9 +81,18 @@ test('Module express disponible', () => {
     }
 });
 
-test('Module sqlite3 disponible', () => {
+test('Module better-sqlite3 disponible', () => {
     try {
-        require('sqlite3');
+        require('better-sqlite3');
+        return true;
+    } catch {
+        return false;
+    }
+});
+
+test('Module bcrypt disponible', () => {
+    try {
+        require('bcrypt');
         return true;
     } catch {
         return false;

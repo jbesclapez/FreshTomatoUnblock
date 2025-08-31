@@ -25,8 +25,11 @@ mkdir -p /volume2/docker/freshtomato-unblock/data
 # Or if using relative path, create local data directory
 mkdir -p data
 
-# Set environment variables
-export ADMIN_PASSWORD="your_secure_password"
+# Set environment variables (SÉCURISÉ)
+# D'abord, générer un hash bcrypt:
+node utils/generate-hash.js "your_secure_password"
+# Puis utiliser le hash généré:
+export ADMIN_PASSWORD_HASH="$2b$12$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 # Deploy with production compose file
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
