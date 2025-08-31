@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - FreshTomato Unblock</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <header class="login-header">
+                <h1>🔐 Administration</h1>
+                <p>FreshTomato Unblock Service</p>
+            </header>
+
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="password">Mot de passe administrateur :</label>
+                    <input type="password" id="password" name="password" required autofocus>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <span class="btn-text">Se connecter</span>
+                    <span class="btn-spinner hidden"></span>
+                </button>
+            </form>
+
+            <div id="login-error" class="error-message hidden"></div>
+        </div>
+
+        <footer class="login-footer">
+            <a href="/" class="back-link">← Retour à l'interface utilisateur</a>
+        </footer>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>

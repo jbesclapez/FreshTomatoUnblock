@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshTomato Unblock - Débloquer Internet</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 Déblocage Internet</h1>
+            <p>Débloquez temporairement l'accès Internet pour vos appareils</p>
+        </header>
+
+        <main>
+            <!-- Zone de notification -->
+            <div id="notification" class="notification hidden"></div>
+
+            <!-- Loading state -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Chargement des appareils...</p>
+            </div>
+
+            <!-- Section de configuration des durées -->
+            <div id="config-section" class="config-section hidden">
+                <div class="duration-selector">
+                    <label for="duration">Durée de déblocage :</label>
+                    <select id="duration">
+                        <!-- Options générées dynamiquement -->
+                    </select>
+                    <span class="duration-info">minutes</span>
+                </div>
+            </div>
+
+            <!-- Liste des appareils -->
+            <div id="devices-container" class="devices-container hidden">
+                <div id="devices-list" class="devices-grid">
+                    <!-- Cartes d'appareils générées dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Message si aucun appareil -->
+            <div id="no-devices" class="no-devices hidden">
+                <h3>Aucun appareil configuré</h3>
+                <p>Contactez l'administrateur pour ajouter des appareils.</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>FreshTomato Unblock Service</p>
+            <a href="/admin" class="admin-link">Administration</a>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

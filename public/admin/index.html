@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - FreshTomato Unblock</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-page">
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="header-content">
+                <h1>⚙️ Administration FreshTomato Unblock</h1>
+                <div class="header-actions">
+                    <a href="/" class="btn btn-secondary">Interface utilisateur</a>
+                    <button id="logout-btn" class="btn btn-danger">Déconnexion</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="admin-nav">
+            <button class="nav-btn active" data-section="dashboard">📊 Dashboard</button>
+            <button class="nav-btn" data-section="devices">📱 Appareils</button>
+            <button class="nav-btn" data-section="config">⚙️ Configuration</button>
+            <button class="nav-btn" data-section="logs">📝 Logs</button>
+            <button class="nav-btn" data-section="tools">🔧 Outils</button>
+        </nav>
+
+        <!-- Notification -->
+        <div id="notification" class="notification hidden"></div>
+
+        <!-- Content sections -->
+        <main class="admin-main">
+            <!-- Dashboard -->
+            <section id="dashboard-section" class="admin-section active">
+                <h2>📊 Dashboard</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📱</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="total-devices">-</div>
+                            <div class="stat-label">Appareils configurés</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🔓</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="unlocks-24h">-</div>
+                            <div class="stat-label">Déblocages (24h)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="unlocks-7d">-</div>
+                            <div class="stat-label">Déblocages (7j)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">🌐</div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="ssh-status">-</div>
+                            <div class="stat-label">Statut SSH</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-actions">
+                    <button id="test-ssh-btn" class="btn btn-primary">🔍 Tester SSH</button>
+                    <button id="refresh-stats-btn" class="btn btn-secondary">🔄 Actualiser</button>
+                </div>
+            </section>
+
+            <!-- Devices -->
+            <section id="devices-section" class="admin-section">
+                <div class="section-header">
+                    <h2>📱 Gestion des appareils</h2>
+                    <button id="add-device-btn" class="btn btn-primary">➕ Ajouter un appareil</button>
+                </div>
+
+                <div class="devices-table-container">
+                    <table class="admin-table" id="devices-table">
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Adresse MAC</th>
+                                <th>Date d'ajout</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Contenu généré dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Configuration -->
+            <section id="config-section" class="admin-section">
+                <h2>⚙️ Configuration SSH</h2>
+                
+                <form id="config-form" class="config-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="router-ip">IP du routeur :</label>
+                            <input type="text" id="router-ip" name="router_ip" placeholder="192.168.1.1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ssh-user">Utilisateur SSH :</label>
+                            <input type="text" id="ssh-user" name="ssh_user" placeholder="root" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="default-timeout">Timeout par défaut (min) :</label>
+                            <input type="number" id="default-timeout" name="default_timeout_minutes" min="1" max="60" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="max-timeout">Timeout maximum (min) :</label>
+                            <input type="number" id="max-timeout" name="max_timeout_minutes" min="1" max="120" required>
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label for="ssh-key">Clé SSH privée :</label>
+                            <div class="key-input-section">
+                                <div class="key-upload">
+                                    <label for="key-file">Importer un fichier clé (.ppk, .pem, .key) :</label>
+                                    <input type="file" id="key-file" accept=".ppk,.pem,.key,.txt" onchange="handleKeyFileUpload(event)">
+                                    <small>Supporte les fichiers PuTTY (.ppk) et OpenSSH (.pem, .key)</small>
+                                </div>
+                                <textarea id="ssh-key" name="ssh_key" rows="8" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAA...&#10;-----END OPENSSH PRIVATE KEY-----" required></textarea>
+                                <div class="key-actions">
+                                    <button type="button" class="btn btn-secondary" onclick="convertExistingKey()">🔄 Convertir PPK → OpenSSH</button>
+                                    <small>Utilisez ce bouton si vous avez collé une clé PPK dans la zone de texte</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Sauvegarder</button>
+                        <button type="button" id="test-config-btn" class="btn btn-secondary">🧪 Tester configuration</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Logs -->
+            <section id="logs-section" class="admin-section">
+                <div class="section-header">
+                    <h2>📝 Journal des déblocages</h2>
+                    <div class="logs-actions">
+                        <button id="refresh-logs-btn" class="btn btn-secondary">🔄 Actualiser</button>
+                        <button id="cleanup-logs-btn" class="btn btn-warning">🧹 Nettoyer</button>
+                    </div>
+                </div>
+
+                <div class="logs-table-container">
+                    <table class="admin-table" id="logs-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Heure</th>
+                                <th>Appareil</th>
+                                <th>MAC</th>
+                                <th>IP Source</th>
+                                <th>Durée</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Contenu généré dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Tools -->
+            <section id="tools-section" class="admin-section">
+                <h2>🔧 Outils</h2>
+                
+                <div class="tools-grid">
+                    <div class="tool-card">
+                        <h3>💾 Export/Import</h3>
+                        <p>Sauvegarder ou restaurer la configuration et les appareils</p>
+                        <div class="tool-actions">
+                            <button id="export-config-btn" class="btn btn-primary">📤 Exporter</button>
+                            <label for="import-file" class="btn btn-secondary file-btn">
+                                📥 Importer
+                                <input type="file" id="import-file" accept=".json" style="display: none;">
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-card">
+                        <h3>🧪 Tests</h3>
+                        <p>Tester la connectivité et les fonctionnalités</p>
+                        <div class="tool-actions">
+                            <button id="test-all-btn" class="btn btn-primary">🔍 Test complet</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="device-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Ajouter un appareil</h3>
+                <button class="modal-close" data-modal="device-modal" onclick="alert('Close button clicked'); closeModal('device-modal');">&times;</button>
+            </div>
+            <form id="device-form" class="modal-form">
+                <input type="hidden" id="device-id" name="id">
+                
+                <div class="form-group">
+                    <label for="device-name">Nom de l'appareil :</label>
+                    <input type="text" id="device-name" name="name" placeholder="ex: iPhone de Marie" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="device-mac">Adresse MAC :</label>
+                    <input type="text" id="device-mac" name="mac" placeholder="AA:BB:CC:DD:EE:FF" required pattern="^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$">
+                    <small>Format: XX:XX:XX:XX:XX:XX</small>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary modal-cancel" data-modal="device-modal" onclick="alert('Cancel button clicked'); closeModal('device-modal');">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login Debug</title>
+</head>
+<body>
+    <h1>Test de l'authentification</h1>
+    <button id="test-login">Tester Login avec test123</button>
+    <button id="test-redirect">Tester redirection /admin/</button>
+    <div id="result"></div>
+
+    <script>
+        const result = document.getElementById('result');
+
+        document.getElementById('test-login').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password: 'test123' })
+                });
+
+                const data = await response.json();
+                result.innerHTML = `<h3>Résultat login:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success) {
+                    result.innerHTML += '<p>Login réussi ! Testez maintenant la redirection.</p>';
+                }
+            } catch (error) {
+                result.innerHTML = `<h3>Erreur:</h3><pre>${error.message}</pre>`;
+            }
+        });
+
+        document.getElementById('test-redirect').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/admin/', {
+                    redirect: 'manual'
+                });
+                
+                if (response.type === 'opaqueredirect') {
+                    result.innerHTML += '<p>Redirection détectée vers login</p>';
+                } else if (response.ok) {
+                    const text = await response.text();
+                    if (text.includes('Administration')) {
+                        result.innerHTML += '<p>✅ Accès admin autorisé !</p>';
+                        window.location.href = '/admin/';
+                    } else {
+                        result.innerHTML += '<p>❌ Réponse inattendue</p>';
+                    }
+                }
+            } catch (error) {
+                result.innerHTML += `<p>Erreur redirection: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
