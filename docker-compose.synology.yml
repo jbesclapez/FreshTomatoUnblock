@@ -7,7 +7,9 @@ version: '3.8'
 
 services:
   freshtomato-unblock:
-    build: .  # ADD THIS LINE
+    build: 
+      context: .
+      dockerfile: Dockerfile
     container_name: freshtomato-unblock
     # Use Docker volume instead of bind mount for auto-creation
     ports:
