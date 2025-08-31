@@ -28,7 +28,8 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    user: "1001:1001"
+    # Use root user for Synology volume permissions
+    # user: "1001:1001"  # Commented out for Synology compatibility
     # Remove read_only for now as it may cause issues with Portainer
     # read_only: true
     tmpfs:
