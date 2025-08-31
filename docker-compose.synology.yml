@@ -28,18 +28,18 @@ services:
       - "192.168.1.10:3000:3000"
     restart: on-failure:5
     environment:
-      - NODE_ENV=production
-      - DEFAULT_ROUTER_IP=192.168.1.1
+      NODE_ENV: production
+      DEFAULT_ROUTER_IP: 192.168.1.1
       # SÉCURITÉ - Authentification bcrypt (OBLIGATOIRE)
-      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:?ADMIN_PASSWORD_HASH is required - Generate with: node utils/generate-hash.js}
-      - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET is required (minimum 32 characters)}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:?ADMIN_PASSWORD_HASH is required}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
       # Fallback développement (supprimer en production)
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
-      - DB_PATH=/app/data/app.db
-      - SSH_KEYS_PATH=/app/data/ssh_keys
-      - DEFAULT_SSH_USER=root
-      - DEFAULT_TIMEOUT_MINUTES=1
-      - MAX_TIMEOUT_MINUTES=60
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      DB_PATH: /app/data/app.db
+      SSH_KEYS_PATH: /app/data/ssh_keys
+      DEFAULT_SSH_USER: root
+      DEFAULT_TIMEOUT_MINUTES: 1
+      MAX_TIMEOUT_MINUTES: 60
     volumes:
       - freshtomato_data:/app/data
     extra_hosts:

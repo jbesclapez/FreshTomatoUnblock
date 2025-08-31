@@ -69,7 +69,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS en production
+    secure: process.env.FORCE_HTTPS === 'true', // Only require HTTPS if explicitly set
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 heures
     sameSite: 'lax' // Protection CSRF
