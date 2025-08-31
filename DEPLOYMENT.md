@@ -16,35 +16,41 @@ docker-compose up -d
 1. Copy the project folder to your Synology NAS (192.168.1.10)
 2. SSH into your Synology or use File Station
 
-### Step 2: Create Data Directory and Deploy
+### Step 2: Generate Secure Configuration
 
 ```bash
-# Create the data directory first (using Volume2 as per user setup)
-mkdir -p /volume2/docker/freshtomato-unblock/data
+# 1. Générer un hash bcrypt sécurisé
+node utils/generate-hash.js "VotreMotDePasseSecurise123"
 
-# Or if using relative path, create local data directory
-mkdir -p data
+# 2. Créer un fichier .env avec la configuration sécurisée
+cat > .env << EOF
+# SÉCURITÉ - Configuration production Synology
+ADMIN_PASSWORD_HASH=$2b$12$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+SESSION_SECRET=votre_clé_session_très_longue_minimum_32_caractères
+NODE_ENV=production
+EOF
+```
 
-# Set environment variables (SÉCURISÉ)
-# D'abord, générer un hash bcrypt:
-node utils/generate-hash.js "your_secure_password"
-# Puis utiliser le hash généré:
-export ADMIN_PASSWORD_HASH="$2b$12$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+### Step 3: Deploy with Synology Configuration
 
-# Deploy with production compose file
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```bash
+# Deploy avec la configuration Synology sécurisée
+docker-compose -f docker-compose.synology.yml up -d
 ```
 
 ### Alternative: Using Synology Container Manager UI
 
-1. **Create the data directory** in File Station:
-   - Navigate to `/volume2/docker/freshtomato-unblock/` (folder already created by user)
-   - Create subfolder: `data`
+1. **Generate password hash first** (via SSH or locally):
+   ```bash
+   node utils/generate-hash.js "VotreMotDePasseSecurise123"
+   ```
 
 2. **In Container Manager**:
    - Create new project
-   - Upload your `docker-compose.yml` and `docker-compose.prod.yml`
-   - Set volume mapping: `/volume2/docker/freshtomato-unblock/data` → `/app/data`
+   - Upload `docker-compose.synology.yml`
+   - Set environment variables:
+     - `ADMIN_PASSWORD_HASH`: (le hash généré ci-dessus)
+     - `SESSION_SECRET`: (minimum 32 caractères)
    - Deploy
 
 ### Step 3: Access the Service

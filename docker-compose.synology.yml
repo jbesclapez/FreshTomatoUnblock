@@ -10,6 +10,9 @@
 # - Comprehensive health monitoring (30s interval, database connectivity)
 # - Docker-managed volumes (auto-created, secure permissions)
 # - Network isolation (bound to NAS IP only)
+# - bcrypt password hashing (12 salt rounds)
+# - HTTPS-ready session security
+# - Production environment validation
 #
 version: '3.8'
 
@@ -27,8 +30,11 @@ services:
     environment:
       - NODE_ENV=production
       - DEFAULT_ROUTER_IP=192.168.1.1
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
-      - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET is required}
+      # SÉCURITÉ - Authentification bcrypt (OBLIGATOIRE)
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH:?ADMIN_PASSWORD_HASH is required - Generate with: node utils/generate-hash.js}
+      - SESSION_SECRET=${SESSION_SECRET:?SESSION_SECRET is required (minimum 32 characters)}
+      # Fallback développement (supprimer en production)
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - DB_PATH=/app/data/app.db
       - SSH_KEYS_PATH=/app/data/ssh_keys
       - DEFAULT_SSH_USER=root
