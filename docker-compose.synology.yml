@@ -1,13 +1,15 @@
-# docker-compose.synology.yml - MAXIMUM SECURITY + MONITORING
+# docker-compose.synology.yml - PRODUCTION READY - MAXIMUM SECURITY
 # 
-# Security-hardened configuration:
-# - Non-root user (nodejs:1001) from Dockerfile
-# - Minimal capabilities (drop ALL, add only CHOWN/DAC_OVERRIDE/FOWNER)
-# - Resource limits (256MB memory, 100 processes)
-# - Secure tmpfs mounts (noexec, nosuid, nodev)
-# - no-new-privileges enabled
-# - Comprehensive health checks (30s interval, database status)
-# - Docker-managed volumes (auto-created, no manual setup)
+# ✅ FULLY HARDENED CONFIGURATION:
+# - Non-root user (nodejs:1001) - no root privileges
+# - Read-only filesystem - prevents runtime modifications
+# - Minimal capabilities (drop ALL, add only essential: CHOWN/DAC_OVERRIDE/FOWNER)
+# - Resource limits (256MB memory, 100 processes max)
+# - Secure tmpfs mounts (noexec, nosuid, nodev) for writable areas only
+# - no-new-privileges - prevents privilege escalation
+# - Comprehensive health monitoring (30s interval, database connectivity)
+# - Docker-managed volumes (auto-created, secure permissions)
+# - Network isolation (bound to NAS IP only)
 #
 version: '3.8'
 
@@ -47,8 +49,8 @@ services:
       - FOWNER  # Needed for SQLite database file operations
     # Use non-root user from Dockerfile (nodejs:1001) for better security
     # user: "0:0"  # Removed - avoid running as root
-    # Temporarily disable read_only for SQLite database initialization
-    # read_only: true  # TODO: Re-enable after database permissions are working
+    # Read-only filesystem for maximum security
+    read_only: true
     tmpfs:
       - /tmp:noexec,nosuid,nodev,size=50m
       - /app/data/ssh_keys:noexec,nosuid,nodev,size=10m
