@@ -1,12 +1,13 @@
-# docker-compose.synology.yml - MAXIMUM SECURITY
+# docker-compose.synology.yml - MAXIMUM SECURITY + MONITORING
 # 
 # Security-hardened configuration:
 # - Non-root user (nodejs:1001) from Dockerfile
-# - Read-only filesystem with tmpfs for writable areas
-# - Minimal capabilities (drop ALL, add only CHOWN/DAC_OVERRIDE)
-# - Resource limits (memory, processes)
+# - Minimal capabilities (drop ALL, add only CHOWN/DAC_OVERRIDE/FOWNER)
+# - Resource limits (256MB memory, 100 processes)
 # - Secure tmpfs mounts (noexec, nosuid, nodev)
 # - no-new-privileges enabled
+# - Comprehensive health checks (30s interval, database status)
+# - Docker-managed volumes (auto-created, no manual setup)
 #
 version: '3.8'
 
@@ -54,6 +55,13 @@ services:
     # Additional security restrictions
     pids_limit: 100  # Limit number of processes
     mem_limit: 256m  # Memory limit for safety
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   freshtomato_data:

@@ -39,8 +39,44 @@ app.use(session({
 }));
 
 // Route de santé pour Docker
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+app.get('/health', async (req, res) => {
+  try {
+    const healthStatus = {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+        limit: '256MB'
+      },
+      database: 'connected',
+      version: process.env.npm_package_version || '1.0.0'
+    };
+
+    // Test database connection
+    if (database.getDb()) {
+      try {
+        database.getDb().prepare('SELECT 1').get();
+        healthStatus.database = 'healthy';
+      } catch (dbError) {
+        healthStatus.database = 'error';
+        healthStatus.status = 'WARNING';
+      }
+    } else {
+      healthStatus.database = 'disconnected';
+      healthStatus.status = 'ERROR';
+    }
+
+    const statusCode = healthStatus.status === 'ERROR' ? 503 : 200;
+    res.status(statusCode).json(healthStatus);
+  } catch (error) {
+    res.status(503).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      error: 'Health check failed'
+    });
+  }
 });
 
 // Route favicon pour éviter les erreurs 404
