@@ -37,15 +37,6 @@ app.use(session({
   }
 }));
 
-// Servir les fichiers statiques
-app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
-app.use('/', express.static(path.join(__dirname, 'public/user')));
-
-// Routes
-app.use('/auth', require('./routes/auth'));
-app.use('/admin', require('./routes/admin'));
-app.use('/api', require('./routes/unblock'));
-
 // Route de santé pour Docker
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -56,10 +47,14 @@ app.get('/favicon.ico', (req, res) => {
   res.status(204).end();
 });
 
-// Route par défaut - redirection vers l'interface utilisateur
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/user/index.html'));
-});
+// Servir les fichiers statiques AVANT les routes pour éviter les conflits
+app.use('/admin', express.static(path.join(__dirname, 'public/admin')));
+app.use(express.static(path.join(__dirname, 'public/user')));
+
+// Routes API (après les fichiers statiques)
+app.use('/auth', require('./routes/auth'));
+app.use('/admin', require('./routes/admin'));
+app.use('/api', require('./routes/unblock'));
 
 // Middleware de gestion d'erreurs
 app.use((err, req, res, next) => {
