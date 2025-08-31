@@ -8,7 +8,7 @@ services:
     ports:
       # Secure: Bind only to NAS IP
       - "192.168.1.10:3000:3000"
-    restart: always
+    restart: on-failure:5
     environment:
       - NODE_ENV=production
       - DEFAULT_ROUTER_IP=192.168.1.1
@@ -20,16 +20,16 @@ services:
       - DEFAULT_TIMEOUT_MINUTES=1
       - MAX_TIMEOUT_MINUTES=60
     volumes:
-      - /volume2/docker/freshtomato-unblock/data:/app/data
+      - /volume2/docker/freshtomato-unblock/data:/app/data:rw
     extra_hosts:
       - "router.local:192.168.1.1"
-    # Security hardening
+    # Security hardening (Synology compatible)
     security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    # Use root user for Synology volume permissions
-    # user: "1001:1001"  # Commented out for Synology compatibility
+      - no-new-privileges:false  # Set to false for Synology compatibility
+    # cap_drop:
+    #   - ALL  # Commented out - too restrictive for Synology
+    # Use Synology-compatible user mapping (like Nextcloud Redis)
+    user: "1026:100"  # Synology docker group mapping
     # Remove read_only for now as it may cause issues with Portainer
     # read_only: true
     tmpfs:
