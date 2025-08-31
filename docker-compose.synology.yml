@@ -1,9 +1,7 @@
 # docker-compose.synology.yml - COMPLETE FOR PORTAINER
 # 
-# IMPORTANT: Before running, execute on Synology:
-# sudo mkdir -p /volume2/docker/freshtomato-unblock/data
-# sudo chmod 777 /volume2/docker/freshtomato-unblock/data
-# Container runs as root (like Nextcloud/MariaDB) for database access
+# Auto-creates data directory with proper permissions
+# No manual sudo commands required!
 #
 version: '3.8'
 
@@ -11,6 +9,7 @@ services:
   freshtomato-unblock:
     build: .  # ADD THIS LINE
     container_name: freshtomato-unblock
+    # Use Docker volume instead of bind mount for auto-creation
     ports:
       # Secure: Bind only to NAS IP
       - "192.168.1.10:3000:3000"
@@ -26,7 +25,7 @@ services:
       - DEFAULT_TIMEOUT_MINUTES=1
       - MAX_TIMEOUT_MINUTES=60
     volumes:
-      - /volume2/docker/freshtomato-unblock/data:/app/data:rw
+      - freshtomato_data:/app/data
     extra_hosts:
       - "router.local:192.168.1.1"
     # Security hardening (Synology compatible)
@@ -41,3 +40,8 @@ services:
     tmpfs:
       - /tmp:noexec,nosuid,size=50m
       # Removed ssh_keys tmpfs - conflicts with volume mount
+
+volumes:
+  freshtomato_data:
+    # Docker-managed volume - auto-created with proper permissions
+    driver: local
