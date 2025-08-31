@@ -3,7 +3,7 @@
 # IMPORTANT: Before running, execute on Synology:
 # sudo mkdir -p /volume2/docker/freshtomato-unblock/data
 # sudo chmod 777 /volume2/docker/freshtomato-unblock/data
-# sudo chown 1026:100 /volume2/docker/freshtomato-unblock/data
+# Container runs as root (like Nextcloud/MariaDB) for database access
 #
 version: '3.8'
 
@@ -34,8 +34,8 @@ services:
       - no-new-privileges:false  # Set to false for Synology compatibility
     # cap_drop:
     #   - ALL  # Commented out - too restrictive for Synology
-    # Use Synology-compatible user mapping (like Nextcloud Redis)
-    user: "1026:100"  # Synology docker group mapping
+    # Run as root for full permissions (like Nextcloud containers)
+    # user: "1026:100"  # Commented out - will run as root
     # Remove read_only for now as it may cause issues with Portainer
     # read_only: true
     tmpfs:
