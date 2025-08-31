@@ -1,4 +1,10 @@
 # docker-compose.synology.yml - COMPLETE FOR PORTAINER
+# 
+# IMPORTANT: Before running, execute on Synology:
+# sudo mkdir -p /volume2/docker/freshtomato-unblock/data
+# sudo chmod 777 /volume2/docker/freshtomato-unblock/data
+# sudo chown 1026:100 /volume2/docker/freshtomato-unblock/data
+#
 version: '3.8'
 
 services:
@@ -34,4 +40,4 @@ services:
     # read_only: true
     tmpfs:
       - /tmp:noexec,nosuid,size=50m
-      - /app/data/ssh_keys:noexec,nosuid,size=10m
+      # Removed ssh_keys tmpfs - conflicts with volume mount
