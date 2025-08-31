@@ -33,8 +33,8 @@ services:
       - no-new-privileges:false  # Set to false for Synology compatibility
     # cap_drop:
     #   - ALL  # Commented out - too restrictive for Synology
-    # Run as root for full permissions (like Nextcloud containers)
-    # user: "1026:100"  # Commented out - will run as root
+    # Override Dockerfile USER directive - run as root like working containers
+    user: "0:0"  # Root user (like your working NPM, Dozzle, Joplin containers)
     # Remove read_only for now as it may cause issues with Portainer
     # read_only: true
     tmpfs:
