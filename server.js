@@ -17,6 +17,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
       imgSrc: ["'self'", "data:"],
+      upgradeInsecureRequests: null, // Disable HTTPS upgrade for local HTTP service
     },
   },
 }));
