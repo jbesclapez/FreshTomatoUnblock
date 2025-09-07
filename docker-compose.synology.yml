@@ -62,7 +62,7 @@ services:
     read_only: true
     tmpfs:
       - /tmp:noexec,nosuid,nodev,size=50m
-      - /app/data/ssh_keys:noexec,nosuid,nodev,size=10m
+      - /app/data/ssh_keys:noexec,nosuid,nodev,size=10m,uid=1001,gid=1001,mode=0700
     # Additional security restrictions
     pids_limit: 100  # Limit number of processes
     mem_limit: 256m  # Memory limit for safety
