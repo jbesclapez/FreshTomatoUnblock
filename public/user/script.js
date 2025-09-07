@@ -169,17 +169,25 @@ async function unblockDevice(deviceId) {
             }, 3000);
             
         } else {
-            throw new Error(data.message || data.error || 'Erreur inconnue');
+            // Utiliser le message d'erreur détaillé du serveur
+            const errorMessage = data.message || data.error || 'Erreur inconnue';
+            throw new Error(errorMessage);
         }
 
     } catch (error) {
         console.error('Erreur déblocage:', error);
-        showNotification(
-            error.message.includes('Trop de tentatives') 
-                ? 'Trop de tentatives. Veuillez attendre avant de réessayer.'
-                : 'Erreur lors du déblocage. Veuillez réessayer.',
-            'error'
-        );
+        
+        // Afficher le message d'erreur spécifique du serveur
+        let displayMessage = error.message;
+        
+        // Gérer les cas spéciaux
+        if (error.message.includes('Trop de tentatives') || error.message.includes('rate limit')) {
+            displayMessage = 'Trop de tentatives. Veuillez attendre avant de réessayer.';
+        } else if (error.message.includes('Network Error') || !error.message) {
+            displayMessage = 'Erreur de connexion. Veuillez vérifier votre réseau et réessayer.';
+        }
+        
+        showNotification(displayMessage, 'error');
         
         resetButton(button, card);
     }

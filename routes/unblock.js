@@ -86,9 +86,27 @@ router.post('/unblock', unblockLimiter, async (req, res) => {
       });
     } else {
       console.log(`❌ Échec déblocage: ${device.name} (${device.mac}) depuis ${sourceIp} - ${result.message}`);
+      
+      // Déterminer le message d'erreur approprié pour l'utilisateur
+      let userMessage = 'Une erreur est survenue lors du déblocage. Veuillez réessayer.';
+      
+      if (result.message) {
+        // Si le message contient des détails techniques, les simplifier
+        if (result.message.includes('Code: 127') || result.message.includes('command not found')) {
+          userMessage = 'Le script de déblocage n\'est pas trouvé sur le routeur. Contactez l\'administrateur.';
+        } else if (result.message.includes('Code: 1') || result.message.includes('Permission denied')) {
+          userMessage = 'Erreur de permission sur le routeur. Contactez l\'administrateur.';
+        } else if (result.message.includes('timeout') || result.message.includes('Connection')) {
+          userMessage = 'Timeout de connexion au routeur. Vérifiez la connectivité réseau.';
+        } else if (result.code && result.code !== 0) {
+          userMessage = `Erreur d'exécution sur le routeur (code ${result.code}). Contactez l\'administrateur.`;
+        }
+      }
+      
       res.status(500).json({
         error: 'Échec du déblocage',
-        message: 'Une erreur est survenue lors du déblocage. Veuillez réessayer.'
+        message: userMessage,
+        details: process.env.NODE_ENV === 'development' ? result.message : undefined
       });
     }
     
@@ -144,9 +162,28 @@ router.post('/unblock-mac', unblockLimiter, async (req, res) => {
         duration: duration
       });
     } else {
+      console.log(`❌ Échec déblocage MAC: ${device.name} (${normalizedMac}) depuis ${sourceIp} - ${result.message}`);
+      
+      // Déterminer le message d'erreur approprié pour l'utilisateur
+      let userMessage = 'Une erreur est survenue lors du déblocage. Veuillez réessayer.';
+      
+      if (result.message) {
+        // Si le message contient des détails techniques, les simplifier
+        if (result.message.includes('Code: 127') || result.message.includes('command not found')) {
+          userMessage = 'Le script de déblocage n\'est pas trouvé sur le routeur. Contactez l\'administrateur.';
+        } else if (result.message.includes('Code: 1') || result.message.includes('Permission denied')) {
+          userMessage = 'Erreur de permission sur le routeur. Contactez l\'administrateur.';
+        } else if (result.message.includes('timeout') || result.message.includes('Connection')) {
+          userMessage = 'Timeout de connexion au routeur. Vérifiez la connectivité réseau.';
+        } else if (result.code && result.code !== 0) {
+          userMessage = `Erreur d'exécution sur le routeur (code ${result.code}). Contactez l\'administrateur.`;
+        }
+      }
+      
       res.status(500).json({
         error: 'Échec du déblocage',
-        message: 'Une erreur est survenue lors du déblocage.'
+        message: userMessage,
+        details: process.env.NODE_ENV === 'development' ? result.message : undefined
       });
     }
     

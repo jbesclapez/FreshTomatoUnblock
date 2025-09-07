@@ -197,6 +197,14 @@ class SshService {
       console.log(`🔓 Déblocage: ${macAddress} pour ${durationMinutes} minute(s)`);
       console.log(`📡 Commande SSH: ${command}`);
       
+      // Test de connectivité réseau avant SSH
+      try {
+        await this.testNetworkConnectivity(config.router_ip);
+      } catch (networkError) {
+        console.log('❌ Connectivité réseau échouée pour déblocage:', networkError.message);
+        throw new Error(`Connexion réseau impossible vers le routeur: ${networkError.message}`);
+      }
+      
       await this.ssh.connect({
         host: config.router_ip,
         username: config.ssh_user,
@@ -213,6 +221,12 @@ class SshService {
       
       await this.ssh.dispose();
       
+      // Log détaillé du résultat SSH pour debug
+      console.log(`🔍 Résultat SSH pour ${macAddress}:`);
+      console.log(`   Code de retour: ${result.code}`);
+      console.log(`   STDOUT: "${result.stdout}"`);
+      console.log(`   STDERR: "${result.stderr}"`);
+      
       if (result.code === 0) {
         console.log(`✅ Déblocage réussi pour ${macAddress}`);
         return { 
@@ -221,11 +235,28 @@ class SshService {
           output: result.stdout
         };
       } else {
-        console.error(`❌ Échec déblocage pour ${macAddress}:`, result.stderr);
+        // Construire un message d'erreur plus informatif
+        const errorDetails = [];
+        if (result.stderr && result.stderr.trim()) {
+          errorDetails.push(`STDERR: ${result.stderr.trim()}`);
+        }
+        if (result.stdout && result.stdout.trim()) {
+          errorDetails.push(`STDOUT: ${result.stdout.trim()}`);
+        }
+        if (result.code !== undefined) {
+          errorDetails.push(`Code: ${result.code}`);
+        }
+        
+        const errorMessage = errorDetails.length > 0 
+          ? errorDetails.join(' | ')
+          : `Code de retour ${result.code} sans message d'erreur`;
+        
+        console.error(`❌ Échec déblocage pour ${macAddress}: ${errorMessage}`);
         return { 
           success: false, 
-          message: `Échec du déblocage: ${result.stderr || 'Erreur inconnue'}`,
-          output: result.stderr
+          message: `Échec du déblocage: ${errorMessage}`,
+          output: result.stderr || result.stdout,
+          code: result.code
         };
       }
       
