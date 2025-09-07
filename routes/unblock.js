@@ -94,6 +94,8 @@ router.post('/unblock', unblockLimiter, async (req, res) => {
         // Si le message contient des détails techniques, les simplifier
         if (result.message.includes('Code: 127') || result.message.includes('command not found')) {
           userMessage = 'Le script de déblocage n\'est pas trouvé sur le routeur. Contactez l\'administrateur.';
+        } else if (result.message.includes('minutes out of range')) {
+          userMessage = `Durée invalide (${duration} minutes). Le script du routeur n'accepte que certaines valeurs. Essayez avec une durée différente (ex: 5, 10, 15, 30 ou 60 minutes).`;
         } else if (result.message.includes('Code: 1') || result.message.includes('Permission denied')) {
           userMessage = 'Erreur de permission sur le routeur. Contactez l\'administrateur.';
         } else if (result.message.includes('timeout') || result.message.includes('Connection')) {
@@ -171,6 +173,8 @@ router.post('/unblock-mac', unblockLimiter, async (req, res) => {
         // Si le message contient des détails techniques, les simplifier
         if (result.message.includes('Code: 127') || result.message.includes('command not found')) {
           userMessage = 'Le script de déblocage n\'est pas trouvé sur le routeur. Contactez l\'administrateur.';
+        } else if (result.message.includes('minutes out of range')) {
+          userMessage = `Durée invalide (${duration} minutes). Le script du routeur n'accepte que certaines valeurs. Essayez avec une durée différente (ex: 5, 10, 15, 30 ou 60 minutes).`;
         } else if (result.message.includes('Code: 1') || result.message.includes('Permission denied')) {
           userMessage = 'Erreur de permission sur le routeur. Contactez l\'administrateur.';
         } else if (result.message.includes('timeout') || result.message.includes('Connection')) {

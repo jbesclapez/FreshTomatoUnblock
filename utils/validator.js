@@ -25,10 +25,40 @@ function validateDuration(minutes) {
     return false;
   }
   
-  const min = parseInt(process.env.DEFAULT_TIMEOUT_MINUTES || '1', 10);
-  const max = parseInt(process.env.MAX_TIMEOUT_MINUTES || '60', 10);
+  // Validation de base: entre 1 et 1440 minutes (24 heures max)
+  return num >= 1 && num <= 1440;
+}
+
+// Validation de la durée avec configuration de la base de données
+async function validateDurationWithConfig(minutes) {
+  const num = parseInt(minutes, 10);
   
-  return num >= min && num <= max;
+  if (isNaN(num)) {
+    return false;
+  }
+  
+  try {
+    const database = require('../config/database');
+    const db = database.getDb();
+    const stmt = db.prepare('SELECT value FROM config WHERE key IN (?, ?)');
+    const rows = stmt.all('default_timeout_minutes', 'max_timeout_minutes');
+    
+    let min = 1;
+    let max = 60;
+    
+    rows.forEach(row => {
+      if (row.key === 'default_timeout_minutes') {
+        min = parseInt(row.value, 10) || 1;
+      } else if (row.key === 'max_timeout_minutes') {
+        max = parseInt(row.value, 10) || 60;
+      }
+    });
+    
+    return num >= min && num <= max;
+  } catch (error) {
+    // Fallback vers validation de base si erreur DB
+    return num >= 1 && num <= 60;
+  }
 }
 
 // Validation d'une adresse IP
@@ -95,6 +125,7 @@ module.exports = {
   validateMacAddress,
   normalizeMacAddress,
   validateDuration,
+  validateDurationWithConfig,
   validateIpAddress,
   validateDeviceName,
   sanitizeString,
