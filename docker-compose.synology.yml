@@ -40,6 +40,9 @@ services:
       DEFAULT_SSH_USER: root
       DEFAULT_TIMEOUT_MINUTES: 1
       MAX_TIMEOUT_MINUTES: 60
+      # Domain blocking configuration
+      DEFAULT_DOMAIN_BLOCKING_ENABLED: ${DEFAULT_DOMAIN_BLOCKING_ENABLED:-false}
+      DEFAULT_DNSMASQ_BLOCKLIST_PATH: ${DEFAULT_DNSMASQ_BLOCKLIST_PATH:-/tmp/blocked_domains.conf}
     volumes:
       - freshtomato_data:/app/data
     extra_hosts:
@@ -75,3 +78,4 @@ volumes:
   freshtomato_data:
     # Docker-managed volume - auto-created with proper permissions
     driver: local
+#docker-compose build --no-cache && docker-compose up -d
